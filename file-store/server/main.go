@@ -71,6 +71,13 @@ func htmlHead(title string) string {
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
+	// Check for session cookie
+	_, err := r.Cookie("session")
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusFound)
+		return
+	}
+
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 	html := htmlHead("Go Server Home") + `
