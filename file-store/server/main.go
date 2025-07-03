@@ -45,15 +45,24 @@ func main() {
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	
-	response := Response{
-		Message:   "Welcome to the Go Server!",
-		Timestamp: time.Now(),
-		Status:    "success",
-	}
+	html := `
+	<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Go Server Home</title>
+	</head>
+	<body>
+		<h1>Welcome to the Go Server!</h1>
+		<p>This is the home page served as HTML.</p>
+	</body>
+	</html>
+	`
 	
-	json.NewEncoder(w).Encode(response)
+	w.Write([]byte(html))
 }
 
 func testHandler(w http.ResponseWriter, r *http.Request) {
