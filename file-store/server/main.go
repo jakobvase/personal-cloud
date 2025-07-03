@@ -44,7 +44,6 @@ func main() {
 	log.Fatal(http.ListenAndServe(port, r))
 }
 
-// homeHandler handles the root endpoint
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	
@@ -57,7 +56,6 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// testHandler handles the test API endpoint
 func testHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	
@@ -70,7 +68,6 @@ func testHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// healthHandler handles the health check endpoint
 func healthHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	
