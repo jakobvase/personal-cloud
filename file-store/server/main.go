@@ -24,6 +24,9 @@ type HealthResponse struct {
 	Service   string    `json:"service"`
 }
 
+// In-memory user session store (for demonstration only)
+var userSessions = make(map[string]string) // sessionID -> username
+
 func main() {
 	// Create a new router
 	r := mux.NewRouter()
@@ -31,6 +34,7 @@ func main() {
 	// Define routes
 	r.HandleFunc("/", homeHandler).Methods("GET")
 	r.HandleFunc("/login", loginHandler).Methods("GET")
+	r.HandleFunc("/login", loginPostHandler).Methods("POST")
     
 	// API routes
 	r.HandleFunc("/api/health", healthHandler).Methods("GET")
@@ -97,7 +101,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	html := htmlHead("File Store Login") + `
 	<body>
 		<h1>Login</h1>
-		<form method="POST" action="/api/login">
+		<form method="POST" action="/login">
 			<label for="username">Username:</label><br>
 			<input type="text" id="username" name="username"><br><br>
 			<label for="password">Password:</label><br>
@@ -109,4 +113,34 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	`
 
 	w.Write([]byte(html))
+}
+
+func loginPostHandler(w http.ResponseWriter, r *http.Request) {
+	// Parse form data
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Invalid form data", http.StatusBadRequest)
+		return
+	}
+	username := r.FormValue("username")
+	password := r.FormValue("password")
+	// For demonstration, accept any username/password
+	if username == "" || password == "" {
+		http.Error(w, "Username and password required", http.StatusBadRequest)
+		return
+	}
+	// Generate a simple session ID (not secure, for demo only)
+	sessionID := fmt.Sprintf("session-%d", time.Now().UnixNano())
+	userSessions[sessionID] = username
+	// Set session cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session",
+		Value:    sessionID,
+		Path:     "/",
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+		Expires: time.Now().Add(24 * time.Hour),
+		// Secure: true, // Uncomment if using HTTPS
+	})
+	// Redirect to home
+	http.Redirect(w, r, "/", http.StatusFound)
 } 
