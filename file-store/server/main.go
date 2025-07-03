@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"time"
+	"server/sessions"
 
 	"github.com/gorilla/mux"
 )
@@ -68,26 +69,7 @@ func htmlHead(title string) string {
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	// Check for session cookie
-	cookie, err := r.Cookie("session")
-	if err != nil {
-		http.Redirect(w, r, "/login", http.StatusFound)
-		return
-	}
-
-	// Check if session exists in userSessions
-	username, ok := userSessions[cookie.Value]
-	if !ok {
-		http.Redirect(w, r, "/login", http.StatusFound)
-		return
-	}
-
-	// Optionally, check if cookie is expired (handled by browser, but double-check for safety)
-	if cookie.Expires.Before(time.Now()) {
-		delete(userSessions, cookie.Value)
-		http.Redirect(w, r, "/login", http.StatusFound)
-		return
-	}
+	username, err := sessions.GetUser(r.Cookie("session"))
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
@@ -130,24 +112,13 @@ func loginPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	username := r.FormValue("username")
 	password := r.FormValue("password")
-	// For demonstration, accept any username/password
-	if username == "" || password == "" {
-		http.Error(w, "Username and password required", http.StatusBadRequest)
+	cookie, err := sessions.SetSession(username, password)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	// Generate a simple session ID (not secure, for demo only)
-	sessionID := fmt.Sprintf("session-%d", time.Now().UnixNano())
-	userSessions[sessionID] = username
 	// Set session cookie
-	http.SetCookie(w, &http.Cookie{
-		Name:     "session",
-		Value:    sessionID,
-		Path:     "/",
-		HttpOnly: true,
-		SameSite: http.SameSiteStrictMode,
-		Expires: time.Now().Add(24 * time.Hour),
-		// Secure: true, // Uncomment if using HTTPS
-	})
+	http.SetCookie(w, cookie)
 	// Redirect to home
 	http.Redirect(w, r, "/", http.StatusFound)
 } 
