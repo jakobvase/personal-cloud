@@ -10,13 +10,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// Response represents the API response structure
-type Response struct {
-	Message   string    `json:"message"`
-	Timestamp time.Time `json:"timestamp"`
-	Status    string    `json:"status"`
-}
-
 // HealthResponse represents the health check response
 type HealthResponse struct {
 	Status    string    `json:"status"`
