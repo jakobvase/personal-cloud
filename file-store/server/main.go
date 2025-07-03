@@ -30,6 +30,9 @@ func main() {
 
 	// Define routes
 	r.HandleFunc("/", homeHandler).Methods("GET")
+	r.HandleFunc("/login", loginHandler).Methods("GET")
+    
+	// API routes
 	r.HandleFunc("/api/test", testHandler).Methods("GET")
 	r.HandleFunc("/api/health", healthHandler).Methods("GET")
 
@@ -91,4 +94,24 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	json.NewEncoder(w).Encode(response)
+}
+
+func loginHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	html := htmlHead("File Store Login") + `
+	<body>
+		<h1>Login</h1>
+		<form method="POST" action="/api/login">
+			<label for="username">Username:</label><br>
+			<input type="text" id="username" name="username"><br><br>
+			<label for="password">Password:</label><br>
+			<input type="password" id="password" name="password"><br><br>
+			<input type="submit" value="Login">
+		</form>
+	</body>
+	</html>
+	`
+
+	w.Write([]byte(html))
 } 
