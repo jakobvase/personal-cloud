@@ -33,7 +33,6 @@ func main() {
 	r.HandleFunc("/login", loginHandler).Methods("GET")
     
 	// API routes
-	r.HandleFunc("/api/test", testHandler).Methods("GET")
 	r.HandleFunc("/api/health", healthHandler).Methods("GET")
 
 	// Start the server
@@ -45,6 +44,19 @@ func main() {
 	fmt.Printf("  GET  http://localhost%s/api/health\n", port)
 	
 	log.Fatal(http.ListenAndServe(port, r))
+}
+
+
+func healthHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	
+	response := HealthResponse{
+		Status:    "healthy",
+		Timestamp: time.Now(),
+		Service:   "go-server",
+	}
+	
+	json.NewEncoder(w).Encode(response)
 }
 
 func htmlHead(title string) string {
@@ -70,30 +82,6 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	`
 
 	w.Write([]byte(html))
-}
-
-func testHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	
-	response := Response{
-		Message:   "This is a test API call! The server is working correctly.",
-		Timestamp: time.Now(),
-		Status:    "success",
-	}
-	
-	json.NewEncoder(w).Encode(response)
-}
-
-func healthHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	
-	response := HealthResponse{
-		Status:    "healthy",
-		Timestamp: time.Now(),
-		Service:   "go-server",
-	}
-	
-	json.NewEncoder(w).Encode(response)
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
