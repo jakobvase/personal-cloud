@@ -76,8 +76,22 @@ func htmlHead(title string) string {
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	// Check for session cookie
-	_, err := r.Cookie("session")
+	cookie, err := r.Cookie("session")
 	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusFound)
+		return
+	}
+
+	// Check if session exists in userSessions
+	username, ok := userSessions[cookie.Value]
+	if !ok {
+		http.Redirect(w, r, "/login", http.StatusFound)
+		return
+	}
+
+	// Optionally, check if cookie is expired (handled by browser, but double-check for safety)
+	if cookie.Expires.Before(time.Now()) {
+		delete(userSessions, cookie.Value)
 		http.Redirect(w, r, "/login", http.StatusFound)
 		return
 	}
