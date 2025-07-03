@@ -44,24 +44,28 @@ func main() {
 	log.Fatal(http.ListenAndServe(port, r))
 }
 
+func htmlHead(title string) string {
+	return fmt.Sprintf(`<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>%s</title>
+</head>
+`, title)
+}
+
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	
-	html := `
-	<!DOCTYPE html>
-	<html lang="en">
-	<head>
-		<meta charset="UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<title>Go Server Home</title>
-	</head>
+
+	html := htmlHead("Go Server Home") + `
 	<body>
 		<h1>Welcome to the Go Server!</h1>
 		<p>This is the home page served as HTML.</p>
 	</body>
 	</html>
 	`
-	
+
 	w.Write([]byte(html))
 }
 
