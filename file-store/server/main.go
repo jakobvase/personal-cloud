@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
 	"server/sessions"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -29,7 +29,7 @@ func main() {
 	r.HandleFunc("/", homeHandler).Methods("GET")
 	r.HandleFunc("/login", loginHandler).Methods("GET")
 	r.HandleFunc("/login", loginPostHandler).Methods("POST")
-    
+
 	// API routes
 	r.HandleFunc("/api/health", healthHandler).Methods("GET")
 
@@ -40,20 +40,19 @@ func main() {
 	fmt.Printf("  GET  http://localhost%s/\n", port)
 	fmt.Printf("  GET  http://localhost%s/api/test\n", port)
 	fmt.Printf("  GET  http://localhost%s/api/health\n", port)
-	
+
 	log.Fatal(http.ListenAndServe(port, r))
 }
 
-
 func healthHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	
+
 	response := HealthResponse{
 		Status:    "healthy",
 		Timestamp: time.Now(),
 		Service:   "go-server",
 	}
-	
+
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -70,6 +69,10 @@ func htmlHead(title string) string {
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	username, err := sessions.GetUser(r.Cookie("session"))
+
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusFound)
+	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
@@ -121,4 +124,4 @@ func loginPostHandler(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, cookie)
 	// Redirect to home
 	http.Redirect(w, r, "/", http.StatusFound)
-} 
+}

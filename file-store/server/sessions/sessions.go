@@ -2,9 +2,9 @@ package sessions
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
-	"fmt"
 )
 
 var userSessions = make(map[string]string) // sessionID -> username
@@ -22,7 +22,7 @@ func SetSession(username string, password string) (*http.Cookie, error) {
 		Path:     "/",
 		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
-		Expires: time.Now().Add(24 * time.Hour),
+		Expires:  time.Now().Add(24 * time.Hour),
 		// Secure: true, // Uncomment if using HTTPS
 	}, nil
 }
@@ -31,16 +31,14 @@ func GetUser(cookie *http.Cookie, err error) (string, error) {
 	// Check if session exists in userSessions
 	username, ok := userSessions[cookie.Value]
 	if !ok {
-		http.Redirect(w, r, "/login", http.StatusFound)
-		return "", errors.New("session not found");
+		return "", errors.New("session not found")
 	}
 
 	// Optionally, check if cookie is expired (handled by browser, but double-check for safety)
 	if cookie.Expires.Before(time.Now()) {
 		delete(userSessions, cookie.Value)
-		http.Redirect(w, r, "/login", http.StatusFound)
 		return "", errors.New("session expired")
 	}
 
-	return username, nil;
+	return username, nil
 }

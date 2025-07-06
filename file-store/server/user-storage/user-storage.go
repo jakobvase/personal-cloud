@@ -13,21 +13,20 @@ import (
 
 // File represents a file in the user storage service
 type File struct {
-	Id        string     `json:"id"`
-	Name      string     `json:"name"`
-	Created   UnixMillis `json:"created"`
-	Updated   UnixMillis `json:"updated"`
-	MimeType  string     `json:"mimeType"`
+	Id       string     `json:"id"`
+	Name     string     `json:"name"`
+	Created  UnixMillis `json:"created"`
+	Updated  UnixMillis `json:"updated"`
+	MimeType string     `json:"mimeType"`
 }
 
-
-const userStorageServiceUrl = "http://localhost:8000"
+const dataAuthorizerUrl = "http://localhost:8000"
 
 // Authorize exchanges an OAuth 2.0 authorization code for an access token
 func Authorize(code string, redirectURI string) (string, error) {
 	clientID := "YOUR_CLIENT_ID"
 	clientSecret := "YOUR_CLIENT_SECRET"
-	tokenURL := userStorageServiceUrl + "/oauth/token"
+	tokenURL := dataAuthorizerUrl + "/oauth/token"
 
 	data := url.Values{}
 	data.Set("grant_type", "authorization_code")
@@ -70,7 +69,7 @@ func Authorize(code string, redirectURI string) (string, error) {
 }
 
 func ListFiles(accessToken string) ([]File, error) {
-	url := userStorageServiceUrl + "/files"
+	url := dataAuthorizerUrl + "/files"
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
@@ -123,7 +122,7 @@ func CreateFile(accessToken string, name string, contents io.Reader) (File, erro
 	}
 
 	// Prepare the HTTP request
-	url := userStorageServiceUrl + "/files"
+	url := dataAuthorizerUrl + "/files"
 	req, err := http.NewRequest("POST", url, &buf)
 	if err != nil {
 		return File{}, fmt.Errorf("failed to create request: %w", err)
