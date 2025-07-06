@@ -20,9 +20,11 @@ type File struct {
 	MimeType string     `json:"mimeType"`
 }
 
+// Currently use the same URL for files and authorization. May need to be split later.
 const dataAuthorizerUrl = "http://localhost:8000"
 
-// Authorize exchanges an OAuth 2.0 authorization code for an access token
+// Authorize exchanges an OAuth 2.0 authorization code for an access token.
+// Should probably live in its own authorization package.
 func Authorize(code string, redirectURI string) (string, error) {
 	clientID := "YOUR_CLIENT_ID"
 	clientSecret := "YOUR_CLIENT_SECRET"
