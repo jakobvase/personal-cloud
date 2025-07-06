@@ -28,6 +28,8 @@ func main() {
 	r.HandleFunc("/", homeHandler).Methods("GET")
 	r.HandleFunc("/login", loginHandler).Methods("GET")
 	r.HandleFunc("/login", loginPostHandler).Methods("POST")
+	r.HandleFunc("/storage/authorize", authorizeStorageHandler).Methods("GET")
+	r.HandleFunc("/storage/oauth-callback", getStorageTokenHandler).Methods("GET")
 
 	// API routes
 	r.HandleFunc("/api/health", healthHandler).Methods("GET")
@@ -137,5 +139,65 @@ func loginPostHandler(w http.ResponseWriter, r *http.Request) {
 	// Set session cookie
 	http.SetCookie(w, cookie)
 	// Redirect to home
+	http.Redirect(w, r, "/", http.StatusFound)
+}
+
+func authorizeStorageHandler(w http.ResponseWriter, r *http.Request) {
+	userId, err := sessions.GetUserId(r.Cookie("session"))
+	user, err2 := users.GetUser(userId)
+
+	if err != nil || err2 != nil {
+		http.Redirect(w, r, "/login", http.StatusFound)
+	}
+
+	// Generate a state parameter for CSRF protection
+	// TODO probably unsafe.
+	state := fmt.Sprintf("%d", time.Now().UnixNano())
+	// Store it on the user
+	user.SetStorageAuthorizationPkce(state)
+
+	redirectURI := "http://localhost:8080/storage/oauth-callback"
+
+	// Generate the authorization URL
+	authURL := user_storage.GenerateAuthUrl(redirectURI, state)
+
+	// Redirect the user to the authorization URL
+	http.Redirect(w, r, authURL, http.StatusFound)
+}
+
+func getStorageTokenHandler(w http.ResponseWriter, r *http.Request) {
+	userId, err := sessions.GetUserId(r.Cookie("session"))
+	user, err2 := users.GetUser(userId)
+
+	if err != nil || err2 != nil {
+		http.Redirect(w, r, "/login", http.StatusFound)
+	}
+
+	// Get the authorization code from the query parameters
+	code := r.URL.Query().Get("code")
+	state := r.URL.Query().Get("state")
+
+	if code == "" {
+		http.Error(w, "Authorization code is required", http.StatusBadRequest)
+		return
+	}
+
+	// Verify the state parameter to prevent CSRF attacks
+	if state != user.StorageAuthorizationCodePkce {
+		http.Error(w, "Authorization failed. Please try again.", http.StatusBadRequest)
+	}
+
+	// Exchange the authorization code for an access token
+	redirectURI := "http://localhost:8080/storage/oauth-callback"
+	accessToken, err := user_storage.GetAuthToken(code, redirectURI)
+	if err != nil {
+		http.Error(w, "Failed to get access token: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Store the token
+	user.SetStorageToken(accessToken)
+
+	// Redirect back to the home page
 	http.Redirect(w, r, "/", http.StatusFound)
 }
