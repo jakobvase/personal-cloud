@@ -1,8 +1,9 @@
-package userStorage
+package user_storage
 
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -22,17 +23,32 @@ type File struct {
 
 // Currently use the same URL for files and authorization. May need to be split later.
 const dataAuthorizerUrl = "http://localhost:8000"
+const clientID = "YOUR_CLIENT_ID"
+const clientSecret = "YOUR_CLIENT_SECRET"
+
+func GenerateAuthUrl(redirectURI string, state string) string {
+	authUrl := dataAuthorizerUrl + "/oauth/authorize"
+
+	data := url.Values{}
+	data.Set("response_type", "code")
+	data.Set("client_id", clientID)
+	data.Set("redirect_uri", redirectURI)
+	// Scope will need to be more precise.
+	data.Set("scope", "files.read files.write")
+	data.Set("state", state)
+
+	return authUrl + "?" + data.Encode()
+}
 
 // Authorize exchanges an OAuth 2.0 authorization code for an access token.
-// Should probably live in its own authorization package.
-func Authorize(code string, redirectURI string) (string, error) {
-	clientID := "YOUR_CLIENT_ID"
-	clientSecret := "YOUR_CLIENT_SECRET"
+// Should probably live in its own authorization package, along with generateauthurl.
+// `redirectURI` is required by the protocol.
+func GetAuthToken(authorizationCode string, redirectURI string) (string, error) {
 	tokenURL := dataAuthorizerUrl + "/oauth/token"
 
 	data := url.Values{}
 	data.Set("grant_type", "authorization_code")
-	data.Set("code", code)
+	data.Set("code", authorizationCode)
 	data.Set("redirect_uri", redirectURI)
 	data.Set("client_id", clientID)
 	data.Set("client_secret", clientSecret)
@@ -98,7 +114,7 @@ func ListFiles(accessToken string) ([]File, error) {
 }
 
 func GetFileContents(accessToken string, fileId string) (io.Reader, error) {
-
+	return nil, errors.New("not implemented")
 }
 
 func CreateFile(accessToken string, name string, contents io.Reader) (File, error) {
@@ -155,5 +171,5 @@ func CreateFile(accessToken string, name string, contents io.Reader) (File, erro
 }
 
 func DeleteFile(accessToken string, fileId string) error {
-
+	return errors.New("not implemented")
 }

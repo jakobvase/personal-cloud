@@ -1,4 +1,4 @@
-package userStorage
+package user_storage
 
 import (
 	"encoding/json"
