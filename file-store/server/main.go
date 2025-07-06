@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"server/sessions"
+	"server/user_storage"
+	"server/users"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -17,9 +19,6 @@ type HealthResponse struct {
 	Timestamp time.Time `json:"timestamp"`
 	Service   string    `json:"service"`
 }
-
-// In-memory user session store (for demonstration only)
-var userSessions = make(map[string]string) // sessionID -> username
 
 func main() {
 	// Create a new router
@@ -36,10 +35,6 @@ func main() {
 	// Start the server
 	port := ":8080"
 	fmt.Printf("Server starting on port %s\n", port)
-	fmt.Printf("Available endpoints:\n")
-	fmt.Printf("  GET  http://localhost%s/\n", port)
-	fmt.Printf("  GET  http://localhost%s/api/test\n", port)
-	fmt.Printf("  GET  http://localhost%s/api/health\n", port)
 
 	log.Fatal(http.ListenAndServe(port, r))
 }
@@ -68,15 +63,21 @@ func htmlHead(title string) string {
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	username, err := sessions.GetUser(r.Cookie("session"))
+	id, err := sessions.GetUserId(r.Cookie("session"))
 
 	if err != nil {
 		http.Redirect(w, r, "/login", http.StatusFound)
 	}
 
+	var _, err2 = users.GetUser(id)
+
+	if err2 != nil {
+		http.Redirect(w, r, "/login", http.StatusFound)
+	}
+
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	html := htmlHead("Go Server Home") + `
+	html := htmlHead("File storage example") + `
 	<body>
 		<h1>Welcome to the Go Server!</h1>
 		<p>This is the home page served as HTML.</p>
@@ -96,7 +97,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		<form method="POST" action="/login">
 			<label for="username">Username:</label><br>
 			<input type="text" id="username" name="username"><br><br>
-			<label for="password">Password:</label><br>
+			<label for="password">Password - but this is a test application, use a test password:</label><br>
 			<input type="password" id="password" name="password"><br><br>
 			<input type="submit" value="Login">
 		</form>
@@ -115,7 +116,20 @@ func loginPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	username := r.FormValue("username")
 	password := r.FormValue("password")
-	cookie, err := sessions.SetSession(username, password)
+
+	// First try to login the user
+	user, err := users.LoginUser(username, password)
+
+	// If login fails, try to create the user
+	if err != nil {
+		user, err = users.CreateUser(username, password)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
+	}
+
+	cookie, err := sessions.SetSession(user.ID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

@@ -7,15 +7,12 @@ import (
 	"time"
 )
 
-var userSessions = make(map[string]string) // sessionID -> username
+var userSessions = make(map[string]string) // sessionID -> user id
 
-func SetSession(username string, password string) (*http.Cookie, error) {
-	if username == "" || password == "" {
-		return nil, errors.New("Username and password required")
-	}
+func SetSession(userId string) (*http.Cookie, error) {
 	// Generate a simple session ID (not secure, for demo only)
 	sessionID := fmt.Sprintf("session-%d", time.Now().UnixNano())
-	userSessions[sessionID] = username
+	userSessions[sessionID] = userId
 	return &http.Cookie{
 		Name:     "session",
 		Value:    sessionID,
@@ -27,9 +24,9 @@ func SetSession(username string, password string) (*http.Cookie, error) {
 	}, nil
 }
 
-func GetUser(cookie *http.Cookie, err error) (string, error) {
+func GetUserId(cookie *http.Cookie, err error) (string, error) {
 	// Check if session exists in userSessions
-	username, ok := userSessions[cookie.Value]
+	id, ok := userSessions[cookie.Value]
 	if !ok {
 		return "", errors.New("session not found")
 	}
@@ -40,5 +37,5 @@ func GetUser(cookie *http.Cookie, err error) (string, error) {
 		return "", errors.New("session expired")
 	}
 
-	return username, nil
+	return id, nil
 }
